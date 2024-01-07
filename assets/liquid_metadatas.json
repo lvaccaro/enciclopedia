@@ -4,8 +4,8 @@
 "52d77159096eed69c73862a30b0d4012b88cedf92d518f98bc5fc8d34b6c27c9" : { "amp": true, "weight": 50 }, 
 "3caca4d1e7c596d4f59db73d62e514963c098cc327cab550bd460a9927f5fdbe" : { "amp": true },
 "9c11715c79783d7ba09ecece1e82c652eccbb8d019aec50cf913f540310724a6" : { "amp": true, "weight": 40 },
-"ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2" : { "category": "stablecoin", "weight": 100 },
-"0e99c1a6da379d1f4151fb9df90449d40d0608f6cb33a5bcbfc8c265f42bab0a" : { "category": "stablecoin", "weight": 90 },
-"18729918ab4bca843656f08d4dd877bed6641fbd596a0a963abbf199cfeb3cec" : { "category": "stablecoin", "weight": 80 },
+"ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2" : { "stablecoin": true, "weight": 100 },
+"0e99c1a6da379d1f4151fb9df90449d40d0608f6cb33a5bcbfc8c265f42bab0a" : { "stablecoin": true, "weight": 90 },
+"18729918ab4bca843656f08d4dd877bed6641fbd596a0a963abbf199cfeb3cec" : { "stablecoin": true, "weight": 80 },
 "78557eb89ea8439dc1a519f4eb0267c86b261068648a0f84a5c6b55ca39b66f1" : { "weight": 70 }
 }
