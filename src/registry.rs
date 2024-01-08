@@ -21,6 +21,7 @@ pub enum Filter {
     Main,
     Amp,
     Stablecoins,
+    Iconed,
     Text(String),
 }
 impl Registry {
@@ -99,6 +100,16 @@ impl Registry {
                 })
                 .map(|x| x.asset_id)
                 .collect()),
+            Filter::Iconed => Ok(self
+                .assets
+                .values()
+                .filter(|x| {
+                    x.icon
+                        .as_ref()
+                        .is_some()
+                })
+                .map(|x| x.asset_id)
+                .collect()),
             Filter::Stablecoins => Ok(self
                 .assets
                 .values()
@@ -142,10 +153,10 @@ impl Registry {
             .get(&asset_id)
             .and_then(|a| a.metadata.as_ref().and_then(|x| x.pair.as_ref()));
         match pair {
-            Some(bitstamp) => {
+            Some(pair) => {
                 let url = format!(
                     "https://api.binance.com/api/v3/avgPrice?symbol={}", 
-                    bitstamp
+                    pair
                 );
                 let res = reqwest::get(url).await.unwrap();
                 let price = res.json::<BinancePrice>().await.unwrap();

@@ -135,7 +135,6 @@ impl Component for App {
 
                 { self.view_filters(ctx)}
 
-
                 <section class="topic">
                 <section class="showcase">
                 { body }
@@ -178,25 +177,25 @@ impl App {
         html! {
             <section class="topic">
                 <section class="showcase">
-                    <section class="nes-container with-title"><h3 class="title"> </h3>
+                    <section class=""><h3 class="title"> </h3>
 
                     <div class="item">
-                            <button class="nes-btn" onclick={ctx.link().callback(|_| Msg::GetAssets(Filter::Main))}>
+                            <button class="nes-btn is-primary" onclick={ctx.link().callback(|_| Msg::GetAssets(Filter::Main))}>
                                 { "Main" }
                             </button> { " " }
-                            <button class="nes-btn" onclick={ctx.link().callback(|_| Msg::GetAssets(Filter::Amp))}>
+                            <button class="nes-btn is-success" onclick={ctx.link().callback(|_| Msg::GetAssets(Filter::Amp))}>
                                 { "Amp" }
                             </button> { " " }
-                            <button class="nes-btn" onclick={ctx.link().callback(|_| {
-                                console_dbg!("Complete");
-                                Msg::GetAssets(Filter::Stablecoins)
-                            })}>
+                            <button class="nes-btn is-warning" onclick={ctx.link().callback(|_| Msg::GetAssets(Filter::Stablecoins))}>
                                 { "Stablecoins" }
+                            </button> { " " }
+                            <button class="nes-btn is-error" onclick={ctx.link().callback(|_| Msg::GetAssets(Filter::Iconed))}>
+                                { "Iconed" }
                             </button> { " " }
                             <button class="nes-btn" onclick={ctx.link().callback(|_| Msg::GetAssets(Filter::All))}>
                                 { "All" }
                             </button>
-                            { self.view_input(ctx.link()) }
+                            //{ self.view_input(ctx.link()) }
                     </div>
                     </section>
                 </section>
@@ -281,7 +280,7 @@ impl App {
                 <input type="text" class="nes-input is-warning" value={ supply.unwrap_or("".to_string()) }/>
             </div>
             <div class="nes-field is-inline" hidden={ price.is_none() }>
-                <label for="warning_field"> { "Bitstamp price " } { pair.unwrap_or("".to_string()) }</label>
+                <label for="warning_field"> { "Price " } { pair.unwrap_or("".to_string()) }</label>
                 <input type="text" class="nes-input is-success" value={ price.unwrap_or("".to_string()) }/>
             </div>
             </section>
