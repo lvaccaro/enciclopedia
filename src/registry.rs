@@ -6,6 +6,12 @@ use serde_json::Error;
 use crate::asset::{Asset, Metadata};
 use crate::asset_entry::AssetEntry;
 
+
+#[derive(Deserialize, Debug)]
+struct BinancePrice {
+    price: String
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Registry {
     pub assets: IndexMap<AssetId, Asset>,
@@ -112,7 +118,7 @@ impl Registry {
         }
     }
 
-    pub async fn fetch(&mut self, asset_id: AssetId) -> Result<AssetEntry, Error> {
+    pub async fn fetch(&self, asset_id: AssetId) -> Result<AssetEntry, Error> {
         let url = format!("https://blockstream.info/liquid/api/asset/{}", asset_id);
         let res = reqwest::get(url).await.unwrap();
         let asset: AssetEntry = res.json().await.unwrap();
@@ -120,7 +126,7 @@ impl Registry {
         Ok(asset)
     }
 
-    pub async fn supply(&mut self, asset_id: AssetId) -> Result<String, Error> {
+    pub async fn supply(&self, asset_id: AssetId) -> Result<String, Error> {
         let url = format!(
             "https://blockstream.info/liquid/api/asset/{}/supply/decimal",
             asset_id
@@ -129,5 +135,24 @@ impl Registry {
         let supply = res.text().await.unwrap();
         println!("Supply: {:#?}", supply);
         Ok(supply)
+    }
+
+    pub async fn price(&self, asset_id: AssetId) -> Result<String, Error> {
+        let pair = self.assets
+            .get(&asset_id)
+            .and_then(|a| a.metadata.as_ref().and_then(|x| x.pair.as_ref()));
+        match pair {
+            Some(bitstamp) => {
+                let url = format!(
+                    "https://api.binance.com/api/v3/avgPrice?symbol={}", 
+                    bitstamp
+                );
+                let res = reqwest::get(url).await.unwrap();
+                let price = res.json::<BinancePrice>().await.unwrap();
+                println!("Price: {:#?}", price.price);
+                return Ok(price.price)
+            },
+            None => Err(serde::de::Error::missing_field("")),
+        }
     }
 }

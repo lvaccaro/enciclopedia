@@ -7,6 +7,8 @@ pub struct Metadata {
     pub amp: Option<bool>,
     pub stablecoin: Option<bool>,
     pub weight: Option<u16>,
+    pub pair: Option<String>,
+    pub meme: Option<bool>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -34,5 +36,23 @@ impl Asset {
         } else {
             return false; //self.asset_id.to_string().contains(text)
         }
+    }
+    pub fn is_amp(&self) -> bool {
+        self
+            .metadata
+            .as_ref()
+            .is_some_and(|x| x.amp.unwrap_or(false))
+    }
+    pub fn is_stablecoin(&self) -> bool {
+        self
+            .metadata
+            .as_ref()
+            .is_some_and(|x| x.stablecoin.unwrap_or(false))
+    }
+    pub fn is_meme(&self) -> bool {
+        self
+            .metadata
+            .as_ref()
+            .is_some_and(|x| x.meme.unwrap_or(false))
     }
 }

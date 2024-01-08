@@ -3,9 +3,16 @@
 "06d1085d6a3a1328fb8189d106c7a8afbef3d327e34504828c4cac2c74ac0802" : { "amp": true },
 "52d77159096eed69c73862a30b0d4012b88cedf92d518f98bc5fc8d34b6c27c9" : { "amp": true, "weight": 50 }, 
 "3caca4d1e7c596d4f59db73d62e514963c098cc327cab550bd460a9927f5fdbe" : { "amp": true },
+"bac499716a43edb4bfd43c31c9cbe06f50921c57164866ea07549ed9b5aa2da3" : { "amp": true },
 "9c11715c79783d7ba09ecece1e82c652eccbb8d019aec50cf913f540310724a6" : { "amp": true, "weight": 40 },
-"ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2" : { "stablecoin": true, "weight": 100 },
+"13fd46f84c0885b9d2cfab1b8f0200876f8a0b2933ddda963187118abecbbbf1" : { "amp": true, "weight": 40 },
+"ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2" : { "stablecoin": true, "weight": 100, "pair": "BTCUSDT" },
 "0e99c1a6da379d1f4151fb9df90449d40d0608f6cb33a5bcbfc8c265f42bab0a" : { "stablecoin": true, "weight": 90 },
-"18729918ab4bca843656f08d4dd877bed6641fbd596a0a963abbf199cfeb3cec" : { "stablecoin": true, "weight": 80 },
-"78557eb89ea8439dc1a519f4eb0267c86b261068648a0f84a5c6b55ca39b66f1" : { "weight": 70 }
+"18729918ab4bca843656f08d4dd877bed6641fbd596a0a963abbf199cfeb3cec" : { "stablecoin": true, "weight": 80, "pair": "BTCEUR" },
+"26ac924263ba547b706251635550a8649545ee5c074fe5db8d7140557baaf32e" : { "stablecoin": true, "weight": 10 },
+"78557eb89ea8439dc1a519f4eb0267c86b261068648a0f84a5c6b55ca39b66f1" : { "weight": 70 },
+"fdf208c97fdefdbb1cb85ce946bfa66b2c0b639eeeefad8b8fcc81843dcb4a0c" : { "weight": 10, "pair": "PEPE_USDT", "meme": true },
+"950eb97d7c8d2dad20cd879e13ac0b4a85cc2759c916945b5587b3cde2549b0d" : { "weight": 10, "meme": true },
+"123465c803ae336c62180e52d94ee80d80828db54df9bedbb9860060f49de2eb" : { "meme": true }
+
 }

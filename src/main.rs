@@ -27,7 +27,7 @@ pub enum FetchState {
     NotFetching,
     Fetching,
     Success(Vec<&'static Asset>),
-    Single(Asset),
+    Single(Asset, Option<String>, Option<String>),
     Failed(),
 }
 
@@ -93,7 +93,11 @@ impl Component for App {
                 ctx.link().send_future(async move {
                     let id = elements::AssetId::from_str(&id).unwrap();
                     match REGISTRY.query_by_id(id).await {
-                        Ok(ass) => Msg::SetMarkdownFetchState(FetchState::Single(ass.clone())),
+                        Ok(ass) => {
+                            let supply: Option<String> = REGISTRY.supply(id).await.ok();
+                            let price: Option<String> = REGISTRY.price(id).await.ok();
+                            Msg::SetMarkdownFetchState(FetchState::Single(ass.clone(), supply, price))
+                        },
                         Err(err) => Msg::SetMarkdownFetchState(FetchState::Failed()),
                     }
                 });
@@ -120,7 +124,7 @@ impl Component for App {
             FetchState::NotFetching => html! {"" },
             FetchState::Fetching => html! {"Fetching" },
             FetchState::Success(data) => self.view_list(ctx, data.into()),
-            FetchState::Single(asset) => self.view_dialog(ctx, asset),
+            FetchState::Single(asset, supply, price) => self.view_dialog(ctx, asset.clone(), supply.clone(), price.clone()),
             FetchState::Failed() => html! {"error"},
         };
         html! {
@@ -134,12 +138,7 @@ impl Component for App {
 
                 <section class="topic">
                 <section class="showcase">
-                    <section class="nes-container with-title"><h3 class="title"> </h3>
-
-                    <div class="nes-table-responsive">
-                    { body }
-                    </div>
-                    </section>
+                { body }
                 </section>
                 </section>
 
@@ -228,31 +227,92 @@ impl App {
 
     fn view_list(&self, ctx: &Context<Self>, assets: &Vec<&Asset>) -> Html {
         html! {
-            <table class="nes-table">
+
+            <section class="topic">
+            <table class="nes-table nes-table-responsive is-bordered">
             <tbody>
             { for assets.iter().map(|x| self.view_item(ctx, x)) }
             </tbody>
             </table>
+            </section>
         }
     }
 
-    fn view_dialog(&self, ctx: &Context<Self>, asset: &Asset) -> Html {
+    fn view_dialog(&self, ctx: &Context<Self>, asset: Asset, supply: Option<String>, price: Option<String>) -> Html {
         let onkeypress_cancel = ctx
             .link()
-            .batch_callback(|e: MouseEvent| Some(Msg::GetVisibleAssets()));
+            .batch_callback(|_: MouseEvent| Some(Msg::GetVisibleAssets()));
         let onkeypress_validate = ctx
             .link()
-            .batch_callback(|e: MouseEvent| Some(Msg::GetVisibleAssets()));
+            .batch_callback(|_: MouseEvent| Some(Msg::GetVisibleAssets()));
+        let asset_entry = asset.asset_entry.as_ref();
+        let name = asset_entry.map_or("", |a| a.name.as_str());
+        let ticker = asset_entry.map_or("", |a| a.ticker.as_ref().map_or("", |t| t.as_str()));
+        let domain = asset_entry.map_or("", |a| a.entity.get("domain").map_or("", |d| d.as_str().unwrap()));
+        let esplora = format!("https://blockstream.info/liquid/asset/{}", asset.asset_id.to_string());
+        let sideswap = format!("https://sideswap.io/swap-market/?product={}", ticker);
+        let base64 = asset.icon.as_ref();
+        let image = format!(
+            "data:image/png;base64, {}",
+            base64.unwrap_or(&"".to_string())
+        );
+        let pair = asset.metadata.as_ref().and_then(|x| x.pair.clone());
         html! {
-            <div class="nes-dialog" id="dialog-default">
-                <form method="dialog">
-                <p class="title">{ asset.asset_entry.as_ref().map( |x| x.name.as_str()) }</p>
-                <p>{ "ID" } { asset.asset_id }</p>
+
+            <div>
+            <section class="nes-container is-dark member-card">
+                <div class="avatar">
+                    <img src={image} class=""/>
+                </div> 
+                <div class="profile">
+                    <h4 class="name">{ticker}</h4> 
+                    <p>{ name } { " by " } { domain }</p>
+                </div>
+            </section>
+
+            <section class="nes-container  with-title topic">
+                    <p class="title"> { "Asset ID" } </p>
+                    <span style="overflow-wrap: break-word;"> { asset.asset_id.to_string() }</span>
+            </section>
+
+            <section class="topic">
+            <div class="nes-field is-inline">
+                <label for="warning_field"> { "Circulating amount" } </label>
+                <input type="text" class="nes-input is-warning" value={ supply.unwrap_or("".to_string()) }/>
+            </div>
+            <div class="nes-field is-inline" hidden={ price.is_none() }>
+                <label for="warning_field"> { "Bitstamp price " } { pair.unwrap_or("".to_string()) }</label>
+                <input type="text" class="nes-input is-success" value={ price.unwrap_or("".to_string()) }/>
+            </div>
+            </section>
+
+            <section class="topic">
+                <div>
+                    <a class="nes-badge" href="#" hidden={!asset.is_amp()}>
+                        <span class="is-success" > { "amp" } </span>
+                    </a>
+                    { " " }
+                    <a class="nes-badge" href="#" hidden={!asset.is_stablecoin()}>
+                        <span class="is-warning"> { "stablecoin" } </span>
+                    </a>
+                    { " " }
+                    <a class="nes-badge" href="#" hidden={!asset.is_meme()}>
+                        <span class="is-error"> { "meme" } </span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="topic">
                 <menu class="dialog-menu">
                     <button class="nes-btn" onclick={onkeypress_cancel}>{"Back"}</button>
-                    <button class="nes-btn is-primary" onclick={onkeypress_validate}>{"Validate"}</button>
+                    { " " }
+                    <a class="nes-btn is-primary" href={ esplora }>{ "Esplora" }</a>
+                    { " " }
+                    <a class="nes-btn is-primary" href={ sideswap }>{ "Sideswap" }</a>
+                    { " " }
+                    <button class="nes-btn is-success" onclick={onkeypress_validate}>{"Validate"}</button>
                 </menu>
-                </form>
+            </section>
             </div>
         }
     }
@@ -265,15 +325,6 @@ impl App {
             "data:image/png;base64, {}",
             base64.unwrap_or(&"".to_string())
         );
-        let is_amp = asset
-            .metadata
-            .as_ref()
-            .is_some_and(|x| x.amp.unwrap_or(false));
-        let is_stablecoin = asset
-            .metadata
-            .as_ref()
-            .is_some_and(|x| x.stablecoin.unwrap_or(false));
-
         let onkeypress = ctx.link().batch_callback(move |e: MouseEvent| {
             let target: Option<EventTarget> = e.target();
             let input = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
@@ -288,11 +339,14 @@ impl App {
             <th> { ticker } </th>
             <th> { name } </th>
             <th>
-                <a class="nes-badge" href="#" hidden={!is_amp}>
+                <a class="nes-badge" href="#" hidden={!asset.is_amp()}>
                     <span class="is-success" > { "amp" } </span>
                 </a>
-                <a class="nes-badge" href="#" hidden={!is_stablecoin}>
+                <a class="nes-badge" href="#" hidden={!asset.is_stablecoin()}>
                     <span class="is-warning"> { "stablecoin" } </span>
+                </a>
+                <a class="nes-badge" href="#" hidden={!asset.is_meme()}>
+                    <span class="is-error"> { "meme" } </span>
                 </a>
             </th>
             <th>
