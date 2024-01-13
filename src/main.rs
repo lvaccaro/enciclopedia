@@ -27,7 +27,7 @@ pub enum FetchState {
     NotFetching,
     Fetching,
     Success(Vec<&'static Asset>),
-    Single(Asset, Option<String>, Option<String>),
+    Single(Asset, Option<String>, Option<String>, bool),
     Failed(),
 }
 
@@ -96,7 +96,8 @@ impl Component for App {
                         Ok(ass) => {
                             let supply: Option<String> = REGISTRY.supply(id).await.ok();
                             let price: Option<String> = REGISTRY.price(id).await.ok();
-                            Msg::SetMarkdownFetchState(FetchState::Single(ass.clone(), supply, price))
+                            let verified = ass.asset_entry.as_ref().is_some_and(|x| x.verifies().is_ok_and(|x| x));
+                            Msg::SetMarkdownFetchState(FetchState::Single(ass.clone(), supply, price, verified))
                         },
                         Err(err) => Msg::SetMarkdownFetchState(FetchState::Failed()),
                     }
@@ -124,7 +125,7 @@ impl Component for App {
             FetchState::NotFetching => html! {"" },
             FetchState::Fetching => html! {"Fetching" },
             FetchState::Success(data) => self.view_list(ctx, data.into()),
-            FetchState::Single(asset, supply, price) => self.view_dialog(ctx, asset.clone(), supply.clone(), price.clone()),
+            FetchState::Single(asset, supply, price, verified) => self.view_dialog(ctx, asset.clone(), supply.clone(), price.clone(), verified.clone()),
             FetchState::Failed() => html! {"error"},
         };
         html! {
@@ -237,7 +238,7 @@ impl App {
         }
     }
 
-    fn view_dialog(&self, ctx: &Context<Self>, asset: Asset, supply: Option<String>, price: Option<String>) -> Html {
+    fn view_dialog(&self, ctx: &Context<Self>, asset: Asset, supply: Option<String>, price: Option<String>, verified: bool) -> Html {
         let onkeypress_cancel = ctx
             .link()
             .batch_callback(|_: MouseEvent| Some(Msg::GetVisibleAssets()));
@@ -262,6 +263,8 @@ impl App {
             <section class="nes-container is-dark member-card">
                 <div class="avatar">
                     <img src={image} class=""/>
+                    <span class="nes-text is-error" hidden={ verified }>{ "unverified" }</span>
+                    <span class="nes-text is-primary" hidden={ !verified }>{ "verified" }</span>
                 </div> 
                 <div class="profile">
                     <h4 class="name">{ticker}</h4> 
@@ -309,7 +312,7 @@ impl App {
                     { " " }
                     <a class="nes-btn is-primary" href={ sideswap }>{ "Sideswap" }</a>
                     { " " }
-                    <button class="nes-btn is-success" onclick={onkeypress_validate}>{"Validate"}</button>
+                    //<button class="nes-btn is-success" onclick={onkeypress_validate}>{"Validate"}</button>
                 </menu>
             </section>
             </div>
