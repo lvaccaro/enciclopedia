@@ -3,8 +3,10 @@ Enciclopedia of liquid assets
 
 Enciclopedia is a liquid asset repository web-client side, written in Rust.
 
-
 A demo version is public available [here](https://enciclopedia.lvaccaro.com).
+
+![screenshot](preview.png)
+
 
 The list of full assets is available at [Esplora](https://blockstream.info/liquid/assets).
 
