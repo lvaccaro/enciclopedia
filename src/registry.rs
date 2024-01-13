@@ -6,10 +6,9 @@ use serde_json::Error;
 use crate::asset::{Asset, Metadata};
 use crate::asset_entry::AssetEntry;
 
-
 #[derive(Deserialize, Debug)]
 struct BinancePrice {
-    price: String
+    price: String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -107,11 +106,7 @@ impl Registry {
             Filter::Iconed => Ok(self
                 .assets
                 .values()
-                .filter(|x| {
-                    x.icon
-                        .as_ref()
-                        .is_some()
-                })
+                .filter(|x| x.icon.as_ref().is_some())
                 .map(|x| x.asset_id)
                 .collect()),
             Filter::Stablecoins => Ok(self
@@ -153,20 +148,18 @@ impl Registry {
     }
 
     pub async fn price(&self, asset_id: AssetId) -> Result<String, Error> {
-        let pair = self.assets
+        let pair = self
+            .assets
             .get(&asset_id)
             .and_then(|a| a.metadata.as_ref().and_then(|x| x.pair.as_ref()));
         match pair {
             Some(pair) => {
-                let url = format!(
-                    "https://api.binance.com/api/v3/avgPrice?symbol={}", 
-                    pair
-                );
+                let url = format!("https://api.binance.com/api/v3/avgPrice?symbol={}", pair);
                 let res = reqwest::get(url).await.unwrap();
                 let price = res.json::<BinancePrice>().await.unwrap();
                 println!("Price: {:#?}", price.price);
-                return Ok(price.price)
-            },
+                return Ok(price.price);
+            }
             None => Err(serde::de::Error::missing_field("")),
         }
     }

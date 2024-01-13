@@ -96,9 +96,17 @@ impl Component for App {
                         Ok(ass) => {
                             let supply: Option<String> = REGISTRY.supply(id).await.ok();
                             let price: Option<String> = REGISTRY.price(id).await.ok();
-                            let verified = ass.asset_entry.as_ref().is_some_and(|x| x.verifies().is_ok_and(|x| x));
-                            Msg::SetMarkdownFetchState(FetchState::Single(ass.clone(), supply, price, verified))
-                        },
+                            let verified = ass
+                                .asset_entry
+                                .as_ref()
+                                .is_some_and(|x| x.verifies().is_ok_and(|x| x));
+                            Msg::SetMarkdownFetchState(FetchState::Single(
+                                ass.clone(),
+                                supply,
+                                price,
+                                verified,
+                            ))
+                        }
                         Err(err) => Msg::SetMarkdownFetchState(FetchState::Failed()),
                     }
                 });
@@ -125,7 +133,13 @@ impl Component for App {
             FetchState::NotFetching => html! {"" },
             FetchState::Fetching => html! {"Fetching" },
             FetchState::Success(data) => self.view_list(ctx, data.into()),
-            FetchState::Single(asset, supply, price, verified) => self.view_dialog(ctx, asset.clone(), supply.clone(), price.clone(), verified.clone()),
+            FetchState::Single(asset, supply, price, verified) => self.view_dialog(
+                ctx,
+                asset.clone(),
+                supply.clone(),
+                price.clone(),
+                verified.clone(),
+            ),
             FetchState::Failed() => html! {"error"},
         };
         html! {
@@ -238,7 +252,14 @@ impl App {
         }
     }
 
-    fn view_dialog(&self, ctx: &Context<Self>, asset: Asset, supply: Option<String>, price: Option<String>, verified: bool) -> Html {
+    fn view_dialog(
+        &self,
+        ctx: &Context<Self>,
+        asset: Asset,
+        supply: Option<String>,
+        price: Option<String>,
+        verified: bool,
+    ) -> Html {
         let onkeypress_cancel = ctx
             .link()
             .batch_callback(|_: MouseEvent| Some(Msg::GetVisibleAssets()));
@@ -248,8 +269,13 @@ impl App {
         let asset_entry = asset.asset_entry.as_ref();
         let name = asset_entry.map_or("", |a| a.name.as_str());
         let ticker = asset_entry.map_or("", |a| a.ticker.as_ref().map_or("", |t| t.as_str()));
-        let domain = asset_entry.map_or("", |a| a.entity.get("domain").map_or("", |d| d.as_str().unwrap()));
-        let esplora = format!("https://blockstream.info/liquid/asset/{}", asset.asset_id.to_string());
+        let domain = asset_entry.map_or("", |a| {
+            a.entity.get("domain").map_or("", |d| d.as_str().unwrap())
+        });
+        let esplora = format!(
+            "https://blockstream.info/liquid/asset/{}",
+            asset.asset_id.to_string()
+        );
         let sideswap = format!("https://sideswap.io/swap-market/?product={}", ticker);
         let base64 = asset.icon.as_ref();
         let image = format!(
@@ -265,9 +291,9 @@ impl App {
                     <img src={image} class=""/>
                     <span class="nes-text is-error" hidden={ verified }>{ "unverified" }</span>
                     <span class="nes-text is-primary" hidden={ !verified }>{ "verified" }</span>
-                </div> 
+                </div>
                 <div class="profile">
-                    <h4 class="name">{ticker}</h4> 
+                    <h4 class="name">{ticker}</h4>
                     <p>{ name } { " by " } { domain }</p>
                 </div>
             </section>

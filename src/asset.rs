@@ -38,20 +38,17 @@ impl Asset {
         }
     }
     pub fn is_amp(&self) -> bool {
-        self
-            .metadata
+        self.metadata
             .as_ref()
             .is_some_and(|x| x.amp.unwrap_or(false))
     }
     pub fn is_stablecoin(&self) -> bool {
-        self
-            .metadata
+        self.metadata
             .as_ref()
             .is_some_and(|x| x.stablecoin.unwrap_or(false))
     }
     pub fn is_meme(&self) -> bool {
-        self
-            .metadata
+        self.metadata
             .as_ref()
             .is_some_and(|x| x.meme.unwrap_or(false))
     }
