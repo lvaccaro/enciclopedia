@@ -54,6 +54,10 @@ impl Registry {
         Ok(assets)
     }
 
+    fn get_assets_minimal() -> Result<IndexMap<AssetId, AssetEntry>, Error> {
+        let content = std::include_str!("../assets/liquid_assets_minimal.json");
+        serde_json::from_str(content)
+    }
     fn get_assets() -> Result<IndexMap<AssetId, AssetEntry>, Error> {
         let content = std::include_str!("../assets/liquid_assets.json");
         serde_json::from_str(content)
