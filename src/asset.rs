@@ -22,19 +22,19 @@ pub struct Asset {
 impl Asset {
     pub fn filter(&self, text: &String) -> bool {
         if let Some(asset_entry) = self.asset_entry.as_ref() {
-            return asset_entry.name.contains(text)
+            return self.asset_id.to_string().contains(text)
+                || asset_entry.name.contains(text)
                 || asset_entry
                     .ticker
                     .as_ref()
                     .unwrap_or(&"".to_string())
                     .contains(text)
                 || asset_entry
-                    .entity
-                    .get("domain")
-                    .filter(|x| x.as_str().unwrap_or_default().contains(text))
-                    .is_some();
+                    .domain()
+                    .unwrap_or(&"".to_string())
+                    .contains(text);
         } else {
-            return false; //self.asset_id.to_string().contains(text)
+            return self.asset_id.to_string().contains(text);
         }
     }
     pub fn is_amp(&self) -> bool {

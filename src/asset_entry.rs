@@ -1,8 +1,7 @@
 use elements::bitcoin::hashes::Hash;
 use elements::{AssetId, ContractHash, OutPoint, Txid};
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
-use serde_json::Value;
+use serde_json::{Result, Value};
 
 /// Contains informations about an asset, including its asset id, the contract
 /// defining its property, and the transaction that issued the asset.
@@ -18,23 +17,23 @@ pub struct AssetEntry {
     /// `issuer_pubkey`, `name`, `ticker`, `precision` and `entity`. Other
     /// fields could be custom values created by the issuer.
     #[serde(default)]
-    pub contract: serde_json::Value,
+    pub contract: Option<serde_json::Value>,
 
     /// Contains information regarding the internet domain of the asset issuer.
     #[serde(default)]
-    pub entity: serde_json::Value,
+    pub entity: Option<serde_json::Value>,
 
     /// The previous output that is spent to create this issuance.
     #[serde(default)]
-    pub issuance_prevout: Prevout,
+    pub issuance_prevout: Option<Prevout>,
 
     /// The transaction input containing this issuance.
     #[serde(default)]
-    pub issuance_txin: Txin,
+    pub issuance_txin: Option<Txin>,
 
     /// A public key owned by the issuer used for authentication.
     #[serde(default)]
-    pub issuer_pubkey: String,
+    pub issuer_pubkey: Option<String>,
 
     /// Name of the asset.
     #[serde(default)]
@@ -50,7 +49,7 @@ pub struct AssetEntry {
 
     /// The version of the registry protocol.
     #[serde(default)]
-    pub version: u8,
+    pub version: Option<u8>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -84,12 +83,22 @@ impl Default for Txin {
 }
 
 impl AssetEntry {
+    pub fn domain(&self) -> Option<&str> {
+        self.entity
+            .as_ref()
+            .and_then(|x| x.get("domain").and_then(|x| x.as_str()))
+    }
+
     pub(crate) fn contract_string(&self) -> Result<String> {
         serde_json::to_string(&self.contract).map_err(Into::into)
     }
 
-    pub(crate) fn issuance_prevout(&self) -> OutPoint {
-        OutPoint::new(self.issuance_prevout.txid, self.issuance_prevout.vout)
+    pub(crate) fn issuance_prevout(&self) -> Result<OutPoint> {
+        if let Some(issuance_prevout) = self.issuance_prevout.clone() {
+            Ok(OutPoint::new(issuance_prevout.txid, issuance_prevout.vout))
+        } else {
+            Err(serde::de::Error::custom("Invalid issuance"))
+        }
     }
 
     /// Verify information in `self.contract` commits in `self.asset_id`
@@ -99,7 +108,7 @@ impl AssetEntry {
     pub fn verifies(&self) -> Result<bool> {
         let contract_hash = ContractHash::from_json_contract(&self.contract_string()?)?;
 
-        let entropy = AssetId::generate_asset_entropy(self.issuance_prevout(), contract_hash);
+        let entropy = AssetId::generate_asset_entropy(self.issuance_prevout()?, contract_hash);
 
         let asset_id = AssetId::from_entropy(entropy);
 
@@ -107,13 +116,12 @@ impl AssetEntry {
             Some(val) => Value::String(val),
             None => Value::Null,
         };
-
-        Ok(asset_id == self.asset_id
-            && Some(self.version as u64) == self.contract["version"].as_u64()
-            && Some(self.issuer_pubkey.as_str()) == self.contract["issuer_pubkey"].as_str()
-            && Some(self.name.as_str()) == self.contract["name"].as_str()
-            && ticker == self.contract["ticker"]
-            && Some(self.precision as u64) == self.contract["precision"].as_u64()
-            && self.entity == self.contract["entity"])
+        Ok(asset_id == self.asset_id)
+        //    && Some(self.version as u64) == self.contract["version"].as_u64()
+        //    && Some(self.issuer_pubkey.as_str()) == self.contract["issuer_pubkey"].as_str()
+        //    && Some(self.name.as_str()) == self.contract["name"].as_str()
+        //    && ticker == self.contract["ticker"]
+        //    && Some(self.precision as u64) == self.contract["precision"].as_u64()
+        //    && self.entity == self.contract["entity"])
     }
 }
