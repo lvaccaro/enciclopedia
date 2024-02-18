@@ -47,7 +47,7 @@ impl Component for App {
     type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
-        console_dbg!("1");
+        console_dbg!("create");
         ctx.link().send_message(Msg::GetAssets(Filter::Main));
         Self {
             state: FetchState::NotFetching,
@@ -73,12 +73,17 @@ impl Component for App {
                 false
             }
             Msg::GetAssets(filter) => {
+                console_dbg!("update");
                 ctx.link().send_future(async move {
                     match REGISTRY.query(filter).await {
                         Ok(ids) => {
+                            console_dbg!("query await");
                             LocalStorage::set("ids", ids.clone()).unwrap();
                             match REGISTRY.query_by_ids(ids).await {
-                                Ok(ass) => Msg::SetMarkdownFetchState(FetchState::Success(ass)),
+                                Ok(ass) => {
+                                    console_dbg!("query_by_ids await");
+                                    Msg::SetMarkdownFetchState(FetchState::Success(ass))
+                                }
                                 Err(_) => Msg::SetMarkdownFetchState(FetchState::Failed()),
                             }
                         }
@@ -142,6 +147,7 @@ impl Component for App {
             ),
             FetchState::Failed() => html! {"error"},
         };
+        console_dbg!("body");
         html! {
             <div id="nescss">
                 { self.view_header(ctx)}
@@ -210,7 +216,6 @@ impl App {
                             <button class="nes-btn" onclick={ctx.link().callback(|_| Msg::GetAssets(Filter::All))}>
                                 { "All" }
                             </button>
-                            //{ self.view_input(ctx.link()) }
                     </div>
                     </section>
                 </section>
@@ -269,9 +274,7 @@ impl App {
         let asset_entry = asset.asset_entry.as_ref();
         let name = asset_entry.map_or("", |a| a.name.as_str());
         let ticker = asset_entry.map_or("", |a| a.ticker.as_ref().map_or("", |t| t.as_str()));
-        let domain = asset_entry.map_or("", |a| {
-            a.entity.get("domain").map_or("", |d| d.as_str().unwrap())
-        });
+        let domain = asset_entry.map_or("", |a| a.domain().map_or("", |d| d));
         let esplora = format!(
             "https://blockstream.info/liquid/asset/{}",
             asset.asset_id.to_string()
@@ -360,7 +363,6 @@ impl App {
             let id = input.unwrap().id();
             Some(Msg::GetAsset(id))
         });
-
         html! {
             <tr>
             <th> <img src={image} class="nes-icon coin is-large"/> </th>

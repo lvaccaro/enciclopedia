@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+
 use elements::AssetId;
+use gloo::console::console_dbg;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use serde_json::Error;
+use serde_json::{json, Error};
 
 use crate::asset::{Asset, Metadata};
 use crate::asset_entry::AssetEntry;
@@ -33,10 +36,11 @@ impl Registry {
     }
 
     pub fn download(&mut self) -> Result<IndexMap<AssetId, Asset>, Error> {
-        let asset_entries = Self::get_assets().unwrap();
         let metadatas = Self::get_metadata().unwrap();
         let icons = Self::get_icons().unwrap();
         let mut assets = IndexMap::default();
+        let asset_entries = Self::get_assets_minimal().unwrap();
+        //let asset_entries = Self::get_assets().unwrap();
 
         for asset in asset_entries {
             assets.insert(
@@ -55,8 +59,34 @@ impl Registry {
 
     fn get_assets_minimal() -> Result<IndexMap<AssetId, AssetEntry>, Error> {
         let content = std::include_str!("../assets/liquid_assets_minimal.json");
-        serde_json::from_str(content)
+        let values: IndexMap<AssetId, serde_json::Value> = serde_json::from_str(content).unwrap();
+        let mut assets = IndexMap::default();
+
+        for asset in values {
+            let value = asset.1.as_array().unwrap();
+            let mut entity = json!({});
+            if let Some(value) = value[0].as_str() {
+                entity = json!({ "domain": value });
+            }
+            assets.insert(
+                asset.0,
+                AssetEntry {
+                    asset_id: asset.0,
+                    contract: None,
+                    entity: Some(entity),
+                    issuance_prevout: None,
+                    issuance_txin: None,
+                    issuer_pubkey: None,
+                    name: value[2].as_str().unwrap_or("").into(),
+                    precision: value[3].as_number().unwrap().as_u64().unwrap() as u8,
+                    ticker: value[1].as_str().and_then(|x| Some(x.to_string())),
+                    version: None,
+                },
+            );
+        }
+        Ok(assets)
     }
+
     fn get_assets() -> Result<IndexMap<AssetId, AssetEntry>, Error> {
         let content = std::include_str!("../assets/liquid_assets.json");
         serde_json::from_str(content)
